@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Firecracker</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    background: #0b0f19;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    font-family: sans-serif;
+  }
+  svg {
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    max-width: 600px;    
+    max-height: 600px;
+    user-select: none;
+  }
+  .instruction {
+    position: absolute;
+    bottom: 30px;
+    color: #a0aec0;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    pointer-events: none;
+    text-align: center;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<div class="instruction">Click the firecracker to ignite!</div>
+
+<svg id="firecracker-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Firecracker body gradient -->
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b91c1c" />
+      <stop offset="50%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#991b1b" />
+    </linearGradient>
+    
+    <!-- Gold bands gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="50%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+
+    <!-- Fuse gradient -->
+    <linearGradient id="fuseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+
+    <!-- Glow filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Layer for Explosions -->
+  <g id="explosion-layer"></g>
+
+  <!-- Firecracker Container Group -->
+  <g id="firecracker-group" style="transform-origin: 250px 320px; transition: transform 0.1s ease;">
+    
+    <!-- Fuse Wire -->
+    <path id="fuse-path" d="M 250 210 Q 280 180 270 145 Q 260 110 280 90" fill="none" stroke="url(#fuseGrad)" stroke-width="4" stroke-linecap="round" />
+    
+    <!-- Spark Element at Fuse Tip -->
+    <g id="fuse-spark" style="display: none;">
+      <circle cx="280" cy="90" r="8" fill="#fef08a" filter="url(#glow)" />
+      <circle cx="280" cy="90" r="3" fill="#ffffff" />
+      <!-- Tiny sparks flying off -->
+      <circle cx="285" cy="82" r="2" fill="#fbbf24" />
+      <circle cx="272" cy="85" r="1.5" fill="#f97316" />
+    </g>
+    <!-- Firecracker Main Body Cylinder -->
+    <rect x="200" y="210" width="100" height="180" rx="6" fill="url(#bodyGrad)" stroke="#7f1d1d" stroke-width="2" />
+    
+    <!-- Inner Body Details (Shadow depth) -->
+    <path d="M 210 210 L 210 390" stroke="#7f1d1d" stroke-width="6" opacity="0.3" />
+
+    <!-- Gold Decorative Center Band -->
+    <rect x="200" y="280" width="100" height="30" fill="url(#goldGrad)" stroke="#92400e" stroke-width="1.5" />
+    <text x="250" y="300" font-size="14" font-weight="bold" fill="#78350f" text-anchor="middle" letter-spacing="2">💥</text>
+
+    <!-- Top & Bottom Golden Caps -->
+    <rect x="196" y="200" width="108" height="12" rx="4" fill="url(#goldGrad)" stroke="#92400e" stroke-width="1.5" />
+    <rect x="196" y="388" width="108" height="12" rx="4" fill="url(#goldGrad)" stroke="#92400e" stroke-width="1.5" />
+
+    <!-- Fuse insertion point ring -->
+    <ellipse cx="250" cy="210" rx="8" ry="3" fill="#92400e" />
+  </g>
+</svg>
+
+<script>
+  const svg = document.getElementById('firecracker-svg');
+  const firecrackerGroup = document.getElementById('firecracker-group');
+  const fuseSpark = document.getElementById('fuse-spark');
+  const explosionLayer = document.getElementById('explosion-layer');
+  const instruction = document.querySelector('.instruction');
+
+  let isIgnited = false;
+
+  svg.addEventListener('click', () => {
+    if (isIgnited) return;
+    isIgnited = true;
+    instruction.textContent = "Ignited! Hold tight...";
+
+    // Show spark on fuse tip
+    fuseSpark.style.display = 'block';
+
+    // Sequence: Burn fuse for 1.2 seconds with shaking effect
+    let startTime = null;
+    const burnDuration = 1200; // ms
+
+    function burnAnimation(timestamp) {
+      if (!startTime) startTime = timestamp;
+      let progress = timestamp - startTime;
+
+      // Add minor rumble / shake to the firecracker
+      let offsetX = (Math.random() - 0.5) * 4;
+      let offsetY = (Math.random() - 0.5) * 4;
+      firecrackerGroup.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+
+      if (progress < burnDuration) {
+        requestAnimationFrame(burnAnimation);
+      } else {
+        // Boom! Trigger explosion
+        explode();
+      }
+    }
+
+    requestAnimationFrame(burnAnimation);
+  });
+
+  function explode() {
+    // Hide the firecracker completely
+    firecrackerGroup.style.display = 'none';
+    instruction.textContent = "BOOM! Click anywhere to reset.";
+
+    // Center of explosion
+    const cx = 250;
+    const cy = 300;
+
+    // Create Flash
+    let flash = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    flash.setAttribute("cx", cx);
+    flash.setAttribute("cy", cy);
+    flash.setAttribute("r", "10");
+    flash.setAttribute("fill", "#ffffff");
+    flash.setAttribute("filter", "url(#glow)");
+    explosionLayer.appendChild(flash);
+
+    // Animate Flash expansion and fade out
+    let flashProgress = 0;
+    function animateFlash() {
+      flashProgress += 0.08;
+      let r = 10 + flashProgress * 180;
+      let opacity = 1 - flashProgress;
+      flash.setAttribute("r", r);
+      flash.setAttribute("opacity", Math.max(0, opacity));
+      if (opacity > 0) {
+        requestAnimationFrame(animateFlash);
+      } else {
+        flash.remove();
+      }
+    }
+    requestAnimationFrame(animateFlash);
+
+    // Generate Sparks / Particles
+    const particleColors = ['#f87171', '#fbbf24', '#38bdf8', '#c084fc', '#34d399', '#f43f5e', '#ffffff'];
+    const particleCount = 45;
+
+    for (let i = 0; i < particleCount; i++) {
+      let angle = Math.random() * Math.PI * 2;
+      let speed = 2 + Math.random() * 8;
+      let size = 3 + Math.random() * 5;
+      let color = particleColors[Math.floor(Math.random() * particleColors.length)];
+
+      let particle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      particle.setAttribute("cx", cx);
+      particle.setAttribute("cy", cy);
+      particle.setAttribute("r", size);
+      particle.setAttribute("fill", color);
+      particle.setAttribute("filter", "url(#glow)");
+      explosionLayer.appendChild(particle);
+
+      // Animate each particle outward with gravity
+      let px = cx;
+      let py = cy;
+      let vx = Math.cos(angle) * speed;
+      let vy = Math.sin(angle) * speed;
+      let life = 1;
+
+      function updateParticle() {
+        vx *= 0.96; // drag/friction
+        vy *= 0.96;
+        vy += 0.15; // gravity pull
+        px += vx;
+        py += vy;
+        life -= 0.02;
+
+        particle.setAttribute("cx", px);
+        particle.setAttribute("cy", py);
+        particle.setAttribute("opacity", Math.max(0, life));
+
+        if (life > 0) {
+          requestAnimationFrame(updateParticle);
+        } else {
+          particle.remove();
+        }
+      }
+      requestAnimationFrame(updateParticle);
+    }
+
+    // Allow reset on subsequent click after explosion finishes
+    setTimeout(() => {
+      svg.addEventListener('click', resetFirecracker, { once: true });
+      instruction.textContent = "Click to light another one!";
+    }, 1000);
+  }
+
+  function resetFirecracker() {
+    isIgnited = false;
+    explosionLayer.innerHTML = '';
+    firecrackerGroup.style.display = 'block';
+    firecrackerGroup.style.transform = 'translate(0px, 0px)';
+    fuseSpark.style.display = 'none';
+    instruction.textContent = "Click the firecracker to ignite!";
+  }
+</script>
+
+</body>
+</html>
