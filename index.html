@@ -71,6 +71,14 @@
   <!-- Background Layer for Explosions -->
   <g id="explosion-layer"></g>
 
+  <!-- Decorative Popup Text Group (Appears after burst) -->
+  <g id="popup-text-group" opacity="0" transform="translate(250, 180) scale(0.5)" style="transform-origin: 0 0; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease; pointer-events: none;">
+    <!-- Main Decorative Header -->
+    <text x="0" y="0" font-size="38" font-weight="900" fill="url(#goldGrad)" text-anchor="middle" filter="url(#glow)" stroke="#78350f" stroke-width="1.5">HAPPY DIWALI TO YOU !</text>
+    <!-- Subtitle Banner -->
+    <text x="0" y="32" font-size="16" font-weight="bold" fill="#f87171" text-anchor="middle" letter-spacing="4" filter="url(#glow)">✨ CELEBRATE THE MOMENT ✨</text>
+  </g>
+
   <!-- Firecracker Container Group -->
   <g id="firecracker-group" style="transform-origin: 250px 320px; transition: transform 0.1s ease;">
     
@@ -109,6 +117,7 @@
   const firecrackerGroup = document.getElementById('firecracker-group');
   const fuseSpark = document.getElementById('fuse-spark');
   const explosionLayer = document.getElementById('explosion-layer');
+  const popupTextGroup = document.getElementById('popup-text-group');
   const instruction = document.querySelector('.instruction');
 
   let isIgnited = false;
@@ -149,6 +158,12 @@
     // Hide the firecracker completely
     firecrackerGroup.style.display = 'none';
     instruction.textContent = "BOOM! Click anywhere to reset.";
+
+    // Trigger decorative popup text with spring scale transition
+    setTimeout(() => {
+      popupTextGroup.style.opacity = '1';
+      popupTextGroup.style.transform = 'translate(250, 180) scale(1)';
+    }, 150);
 
     // Center of explosion
     const cx = 250;
@@ -235,6 +250,11 @@
   function resetFirecracker() {
     isIgnited = false;
     explosionLayer.innerHTML = '';
+    
+    // Hide popup text smoothly
+    popupTextGroup.style.opacity = '0';
+    popupTextGroup.style.transform = 'translate(250, 180) scale(0.5)';
+
     firecrackerGroup.style.display = 'block';
     firecrackerGroup.style.transform = 'translate(0px, 0px)';
     fuseSpark.style.display = 'none';
